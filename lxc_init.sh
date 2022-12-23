@@ -28,9 +28,7 @@ do
     echo "root:$passwd" | lxc exec $env_name -- chpasswd
 
     # get the container's ip
-    a=($(lxc list -c4 --format csv $env_name))
-    env_ip=$a
-    echo $env_ip
+    env_ip=($(lxc list -c4 --format csv  $env_name))
 
     # set container's ssh port
     lxc config device add $env_name proxy1 proxy listen=tcp:$local_ip:$ssh_port connect=tcp:$env_ip:22 bind=host
