@@ -8,3 +8,7 @@
 1. mount vipnas to server
 2. install lxd
 3. install nvidia driver;cuda;cudnn outside the container
+
+## TODO
+1. LXD Cluster test
+2. snap;lxd pre-installed test
