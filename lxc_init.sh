@@ -61,11 +61,11 @@ do
     #container root privilege
     lxc config set $env_name security.privileged true
     # install app
-    lxc exec $env_name -- apt-get update
-    lxc exec $env_name -- apt-get upgrade -y
-    lxc exec $env_name -- apt-get dist-upgrade -y
-    lxc exec $env_name -- apt-get autoremove -y
-    lxc exec $env_name -- apt-get install build-essential -y
+    lxc exec $env_name -- apt-get update -qq
+    lxc exec $env_name -- apt-get upgrade -qq > /dev/null
+    lxc exec $env_name -- apt-get dist-upgrade -qq > /dev/null
+    lxc exec $env_name -- apt-get autoremove -qq > /dev/null
+    lxc exec $env_name -- apt-get install build-essential net-tools -qq > /dev/null
 
     # set ssh config
     lxc exec $env_name -- sed -i 's/#Port 22/Port 22/g' /etc/ssh/sshd_config
