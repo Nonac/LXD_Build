@@ -6,22 +6,33 @@ local_ip=`ifconfig -a|grep inet|grep 192.168.11.*|grep -v 127.0.0.1|grep -v inet
 # Get user.csv
 # the user.csv should be like that:
 #
-#    test,123456,10900,0-8,16000MB,0000:0B:00.0|0000:0C:00.0
+#    test,123456,10000,0-8,16000MB,0000:0B:00.0|0000:0C:00.0,/mnt/ssd|/mnt/hdd|/mnt/nas/,YANGYinan
 #
-#    container_name,password,ssh port,cpu limit,memory limit, gpu limit
+#    container_name,password,ssh port,cpu limit,memory limit, gpu limit, disk limit, personal filefolder in nas
 
 USERPATH="user.csv"
-while read line
-do
-    env_name=$(echo ${line} | cut -d , -f 1)
-    passwd=$(echo ${line} | cut -d , -f 2)
-    ssh_port=$(echo ${line} | cut -d , -f 3)
-    cpu_limit=$(echo ${line} | cut -d , -f 4)
-    memory_limit=$(echo ${line} | cut -d , -f 5)
-    gpu_limit=$(echo ${line} | cut -d , -f 6)
-    disk_limit=$(echo ${line} | cut -d , -f 7)
 
-    echo "env_name:$env_name passwd:$passwd ssh_port:$ssh_port cpu_limit:$cpu_limit memory_limit:$memory_limit gpu_limit:$gpu_limit disk_limit:$disk_limit"
+# read csv file as a array
+arr_csv=() 
+while IFS= read -r line 
+do
+    arr_csv+=("$line")
+done < $USERPATH
+
+
+index=0
+for line in "${arr_csv[@]}"
+do
+    env_name=$(echo $line | cut -d , -f 1)
+    passwd=$(echo $line | cut -d , -f 2)
+    ssh_port=$(echo $line | cut -d , -f 3)
+    cpu_limit=$(echo $line | cut -d , -f 4)
+    memory_limit=$(echo $line | cut -d , -f 5)
+    gpu_limit=$(echo $line | cut -d , -f 6)
+    disk_limit=$(echo $line | cut -d , -f 7)
+    personal_filefolder=$(echo $line | cut -d , -f 8)
+
+    escho "env_name:$env_name passwd:$passwd ssh_port:$ssh_port cpu_limit:$cpu_limit memory_limit:$memory_limit gpu_limit:$gpu_limit disk_limit:$disk_limit"
 
     # launch the container
     lxc launch ubuntu:22.04 $env_name
@@ -58,8 +69,13 @@ do
         cnt=`expr $cnt + 1`
     done
 
+    # mount personal filefolder in nas to container
+    lxc config device add $env_name nas disk source=/mnt/nas/$personal_filefolder path=/mnt/$personal_filefolder
+
     #container root privilege
     lxc config set $env_name security.privileged true
+
+
     # install app
     lxc exec $env_name -- apt-get update -qq
     lxc exec $env_name -- apt-get upgrade -qq > /dev/null
@@ -98,4 +114,8 @@ do
     lxc exec $env_name -- /root/anaconda3/bin/conda create -n pytorch python=3.8 -y
     lxc exec $env_name -- /root/anaconda3/bin/conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia -n pytorch -y 
 
-done < $USERPATH
+    # umount nas
+    lxc config device remove $env_name disk0
+   
+    ((index++))
+done
