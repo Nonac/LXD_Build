@@ -97,21 +97,21 @@ do
 
     
     # install nvidia driver 515.86 in nas
-    lxc exec $env_name -- sh /mnt/nas/vip/drivers/NVIDIA-Linux-x86_64-515.86.01.run --no-kernel-module --silent
+    lxc exec $env_name -- sh /mnt/nas/drivers/NVIDIA-Linux-x86_64-515.86.01.run --no-kernel-module --silent
 
     # install cuda 11.7.1
-    lxc exec $env_name -- sh /mnt/nas/vip/drivers/cuda_11.7.1_515.65.01_linux.run --silent --toolkit
+    lxc exec $env_name -- sh /mnt/nas/drivers/cuda_11.7.1_515.65.01_linux.run --silent --toolkit
     lxc exec $env_name -- sh -c "echo '' >> ~/.bashrc"
     lxc exec $env_name -- sh -c "echo 'export PATH=/usr/local/cuda-11.7/bin${PATH:+:${PATH}}' >> ~/.bashrc"
     lxc exec $env_name -- sh -c "echo 'export LD_LIBRARY_PATH=/usr/local/cuda-11.7/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}' >> ~/.bashrc"
     lxc exec $env_name -- . .bashrc
 
     # install cudnn 8.6.0
-    lxc exec $env_name -- cp /mnt/nas/vip/drivers/cudnn-linux-x86_64-8.6.0.163_cuda11-archive/include/* /usr/local/cuda-11.7/include/
-    lxc exec $env_name -- cp /mnt/nas/vip/drivers/cudnn-linux-x86_64-8.6.0.163_cuda11-archive/lib/* /usr/local/cuda-11.7/lib64/
+    lxc exec $env_name -- cp /mnt/nas/drivers/cudnn-linux-x86_64-8.6.0.163_cuda11-archive/include/* /usr/local/cuda-11.7/include/
+    lxc exec $env_name -- cp /mnt/nas/drivers/cudnn-linux-x86_64-8.6.0.163_cuda11-archive/lib/* /usr/local/cuda-11.7/lib64/
 
     # install Anaconda3
-    lxc exec $env_name -- bash /mnt/nas/vip/drivers/Anaconda3-2022.05-Linux-x86_64.sh -b
+    lxc exec $env_name -- bash /mnt/nas/drivers/Anaconda3-2022.05-Linux-x86_64.sh -b
     lxc exec $env_name -- /root/anaconda3/bin/conda init
     lxc exec $env_name -- . .bashrc
     lxc exec $env_name -- /root/anaconda3/bin/conda config --set auto_activate_base true
