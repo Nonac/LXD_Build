@@ -30,9 +30,9 @@ do
     memory_limit=$(echo $line | cut -d , -f 5)
     gpu_limit=$(echo $line | cut -d , -f 6)
     disk_limit=$(echo $line | cut -d , -f 7)
-    personal_filefolder=$(echo $line | cut -d , -f 8)
+    #personal_filefolder=$(echo $line | cut -d , -f 8)
 
-    escho "env_name:$env_name passwd:$passwd ssh_port:$ssh_port cpu_limit:$cpu_limit memory_limit:$memory_limit gpu_limit:$gpu_limit disk_limit:$disk_limit"
+    echo "env_name:$env_name passwd:$passwd ssh_port:$ssh_port cpu_limit:$cpu_limit memory_limit:$memory_limit gpu_limit:$gpu_limit disk_limit:$disk_limit"
 
     # launch the container
     lxc launch ubuntu:22.04 $env_name
@@ -61,16 +61,22 @@ do
     done
 
     # mount local device to container
+
     disks=(`echo $disk_limit | tr '|' ' '`)
     cnt=0
     for i in ${disks[@]}
     do
-        lxc config device add $env_name disk$cnt disk source=$i path=$i
+        if [ ! -d $i$env_name ]; then
+            mkdir $i$env_name
+            echo "$i$env_name not exists. Has been created."
+        fi
+        lxc config device add $env_name disk$cnt disk source=$i$env_name path=$i
         cnt=`expr $cnt + 1`
     done
 
     # mount personal filefolder in nas to container
-    lxc config device add $env_name nas disk source=/mnt/nas/$personal_filefolder path=/mnt/$personal_filefolder
+    lxc config device add $env_name nas disk source=/mnt/nas/$env_name path=/mnt/$env_name
+    lxc config device add $env_name nas0 disk source=/mnt/nas path=/mnt/nas
 
     #container root privilege
     lxc config set $env_name security.privileged true
@@ -115,7 +121,7 @@ do
     lxc exec $env_name -- /root/anaconda3/bin/conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia -n pytorch -y 
 
     # umount nas
-    lxc config device remove $env_name disk0
+    lxc config device remove $env_name nas0
    
     ((index++))
 done
