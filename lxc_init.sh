@@ -80,6 +80,7 @@ do
 
     #container root privilege
     lxc config set $env_name security.privileged true
+    lxc restart $env_name
 
 
     # install app
@@ -104,11 +105,14 @@ do
     lxc exec $env_name -- sh -c "echo '' >> ~/.bashrc"
     lxc exec $env_name -- sh -c "echo 'export PATH=/usr/local/cuda-11.7/bin${PATH:+:${PATH}}' >> ~/.bashrc"
     lxc exec $env_name -- sh -c "echo 'export LD_LIBRARY_PATH=/usr/local/cuda-11.7/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}' >> ~/.bashrc"
-    lxc exec $env_name -- . .bashrc
+    #lxc exec $env_name -- . .bashrc
 
     # install cudnn 8.6.0
-    lxc exec $env_name -- cp /mnt/nas/drivers/cudnn-linux-x86_64-8.6.0.163_cuda11-archive/include/* /usr/local/cuda-11.7/include/
-    lxc exec $env_name -- cp /mnt/nas/drivers/cudnn-linux-x86_64-8.6.0.163_cuda11-archive/lib/* /usr/local/cuda-11.7/lib64/
+    lxc exec $env_name -- cp /mnt/nas/drivers/cudnn-linux-x86_64-8.6.0.163_cuda11-archive.tar.xz /root/
+    lxc exec $env_name -- tar -xvf /root/cudnn-linux-x86_64-8.6.0.163_cuda11-archive.tar.xz
+    lxc exec $env_name -- cp /root/cudnn-linux-x86_64-8.6.0.163_cuda11-archive/include/* /usr/local/cuda-11.7/include/
+    lxc exec $env_name -- cp /root/cudnn-linux-x86_64-8.6.0.163_cuda11-archive/lib/* /usr/local/cuda-11.7/lib64/
+    lxc exec $env_name -- rm -r /root/cudnn*
 
     # install Anaconda3
     lxc exec $env_name -- bash /mnt/nas/drivers/Anaconda3-2022.05-Linux-x86_64.sh -b
