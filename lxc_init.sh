@@ -2,6 +2,16 @@
 
 # Get current local ip
 local_ip=`ifconfig -a|grep inet|grep 192.168.11.*|grep -v 127.0.0.1|grep -v inet6|awk '{print $2}'|tr -d "addr:"​`
+driver="NVIDIA-Linux-x86_64-515.86.01.run"
+cuda="cuda_11.7.1_515.65.01_linux.run"
+cudaShort="cuda-11.7"
+#BUG: cudnn counld not install auto. Need manully install in container.
+cudnn="cudnn-linux-x86_64-8.6.0.163_cuda11-archive.tar.xz"
+cudnnShort="cudnn-linux-x86_64-8.6.0.163_cuda11-archive"
+anaconda="Anaconda3-2022.05-Linux-x86_64.sh"
+python=3.8
+pytorch="conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia"
+
 
 # Get user.csv
 # the user.csv should be like that:
@@ -20,6 +30,118 @@ do
 done < $USERPATH
 
 
+launchContainer(){
+    # launch the container
+    lxc launch ubuntu:22.04 $env_name
+    echo "root:$passwd" | lxc exec $env_name -- chpasswd
+}
+
+setPort(){
+    # set container's ssh port
+    lxc config device add $env_name ${2} proxy listen=tcp:$local_ip:$ssh_port connect=tcp:$env_ip:${5} bind=host
+}
+
+setCPULimit(){
+    #CPU limit
+    lxc config set $env_name limits.cpu $cpu_limit
+}
+
+setRAMLimit(){
+    #memory limit
+    lxc config set $env_name limits.memory $memory_limit
+}
+
+setGPULimit(){
+    #GPU limit
+    gpus=(`echo $gpu_limit | tr '|' ' '`)
+    cnt=0
+    for i in ${gpus[@]}
+    do
+        lxc config device add $env_name gpu$cnt gpu pci=$i
+        cnt=`expr $cnt + 1`
+    done
+}
+
+filefolderNotExist(){
+    if [ ! -d $i$env_name ]; then
+            mkdir $i$env_name
+            echo "$i$env_name not exists. Has been created."
+    fi
+}
+
+
+setDiskLimit(){
+    # mount local device to container
+    disks=(`echo $disk_limit | tr '|' ' '`)
+    cnt=0
+    for i in ${disks[@]}
+    do
+        filefolderNotExist $i $env_name
+        lxc config device add $env_name disk$cnt disk source=$i$env_name path=$i
+        cnt=`expr $cnt + 1`
+    done
+}
+
+mountNAS(){
+    # mount personal filefolder in nas to container
+    lxc config device add $env_name nas disk source=/mnt/nas/$env_name path=/mnt/$env_name
+    lxc config device add $env_name nas0 disk source=/mnt/nas path=/mnt/nas
+}
+
+setPrivilege(){
+    #container root privilege
+    lxc config set $env_name security.privileged true
+}
+
+initAPT(){
+    # install app
+    lxc exec $env_name -- apt-get update -qq
+    lxc exec $env_name -- apt-get upgrade -qq > /dev/null
+    lxc exec $env_name -- apt-get dist-upgrade -qq > /dev/null
+    lxc exec $env_name -- apt-get autoremove -qq > /dev/null
+    lxc exec $env_name -- apt-get install build-essential net-tools -qq > /dev/null
+}
+
+initSSH(){
+    # set ssh config
+    lxc exec $env_name -- sed -i 's/#Port 22/Port 22/g' /etc/ssh/sshd_config
+    lxc exec $env_name -- sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/g' /etc/ssh/sshd_config
+    lxc exec $env_name -- sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+    lxc exec $env_name -- /etc/init.d/ssh restart
+}
+
+installDriver(){
+    lxc exec $env_name -- sh /mnt/nas/drivers/$driver --no-kernel-module --silent
+}
+
+installCUDA(){
+    lxc exec $env_name -- sh /mnt/nas/drivers/$cuda --silent --toolkit
+    lxc exec $env_name -- sh -c "echo '' >> ~/.bashrc"
+    lxc exec $env_name -- sh -c "echo 'export PATH=/usr/local/$cudaShort/bin${PATH:+:${PATH}}' >> ~/.bashrc"
+    lxc exec $env_name -- sh -c "echo 'export LD_LIBRARY_PATH=/usr/local/$cudaShort/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}' >> ~/.bashrc"
+    #lxc exec $env_name -- . .bashrc
+}
+
+installCUDNN(){
+    lxc exec $env_name -- cp /mnt/nas/drivers/$cudnn /root/
+    lxc exec $env_name -- tar -xf /root/$cudnn
+    lxc exec $env_name -- cp /root/$cudnnShort/include/* /usr/local/$cudaShort/include/
+    lxc exec $env_name -- cp /root/$cudnnShort/lib/* /usr/local/$cudaShort/lib64/
+    #lxc exec $env_name -- rm -r /root/cudnn*
+}
+
+installAnaConda(){
+    lxc exec $env_name -- bash /mnt/nas/drivers/$anaconda -b
+    lxc exec $env_name -- /root/anaconda3/bin/conda init
+    lxc exec $env_name -- . .bashrc
+    lxc exec $env_name -- /root/anaconda3/bin/conda config --set auto_activate_base true
+}
+
+installPyTorch(){
+    lxc exec $env_name -- /root/anaconda3/bin/conda create -n pytorch python=$python -y
+    lxc exec $env_name -- /root/anaconda3/bin/$pytorch -n pytorch -y 
+}
+
 index=0
 for line in "${arr_csv[@]}"
 do
@@ -34,98 +156,33 @@ do
 
     echo "env_name:$env_name passwd:$passwd ssh_port:$ssh_port cpu_limit:$cpu_limit memory_limit:$memory_limit gpu_limit:$gpu_limit disk_limit:$disk_limit"
 
-    # launch the container
-    lxc launch ubuntu:22.04 $env_name
-    echo "root:$passwd" | lxc exec $env_name -- chpasswd
+    launchContainer $env_name $passwd
 
     # get the container's ip
     env_ip=($(lxc list -c4 --format csv  $env_name))
 
-    # set container's ssh port
-    lxc config device add $env_name proxy1 proxy listen=tcp:$local_ip:$ssh_port connect=tcp:$env_ip:22 bind=host
-    #lxc config device add $env_name proxy2 proxy listen=tcp:$local_ip:$tensorboard_port connect=tcp:$env_ip:6006 bind=host
-
-    #CPU limit
-    lxc config set $env_name limits.cpu $cpu_limit
-
-    #memory limit
-    lxc config set $env_name limits.memory $memory_limit
-
-    #GPU limit
-    gpus=(`echo $gpu_limit | tr '|' ' '`)
-    cnt=0
-    for i in ${gpus[@]}
-    do
-        lxc config device add $env_name gpu$cnt gpu pci=$i
-        cnt=`expr $cnt + 1`
-    done
-
-    # mount local device to container
-
-    disks=(`echo $disk_limit | tr '|' ' '`)
-    cnt=0
-    for i in ${disks[@]}
-    do
-        if [ ! -d $i$env_name ]; then
-            mkdir $i$env_name
-            echo "$i$env_name not exists. Has been created."
-        fi
-        lxc config device add $env_name disk$cnt disk source=$i$env_name path=$i
-        cnt=`expr $cnt + 1`
-    done
-
-    # mount personal filefolder in nas to container
-    lxc config device add $env_name nas disk source=/mnt/nas/$env_name path=/mnt/$env_name
-    lxc config device add $env_name nas0 disk source=/mnt/nas path=/mnt/nas
-
-    #container root privilege
-    lxc config set $env_name security.privileged true
-    lxc restart $env_name
+    setPort $env_name proxy0 $local_ip $ssh_port $env_ip 22
+    #setPort $env_name proxy1 $local_ip $tensorflow_port $env_ip 6006
 
 
-    # install app
-    lxc exec $env_name -- apt-get update -qq
-    lxc exec $env_name -- apt-get upgrade -qq > /dev/null
-    lxc exec $env_name -- apt-get dist-upgrade -qq > /dev/null
-    lxc exec $env_name -- apt-get autoremove -qq > /dev/null
-    lxc exec $env_name -- apt-get install build-essential net-tools -qq > /dev/null
+    setCPULimit $env_name $cpu_limit
+    setRAMLimit $env_name $memory_limit
+    setGPULimit $env_name $gpu_limit
+    setDiskLimit $env_name $disk_limit
 
-    # set ssh config
-    lxc exec $env_name -- sed -i 's/#Port 22/Port 22/g' /etc/ssh/sshd_config
-    lxc exec $env_name -- sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/g' /etc/ssh/sshd_config
-    lxc exec $env_name -- sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
-    lxc exec $env_name -- /etc/init.d/ssh restart
+    mountNAS $env_name
+    setPrivilege $env_name
+    initAPT $env_name
+    initSSH $env_name
 
-    
-    # install nvidia driver 515.86 in nas
-    lxc exec $env_name -- sh /mnt/nas/drivers/NVIDIA-Linux-x86_64-515.86.01.run --no-kernel-module --silent
-
-    # install cuda 11.7.1
-    lxc exec $env_name -- sh /mnt/nas/drivers/cuda_11.7.1_515.65.01_linux.run --silent --toolkit
-    lxc exec $env_name -- sh -c "echo '' >> ~/.bashrc"
-    lxc exec $env_name -- sh -c "echo 'export PATH=/usr/local/cuda-11.7/bin${PATH:+:${PATH}}' >> ~/.bashrc"
-    lxc exec $env_name -- sh -c "echo 'export LD_LIBRARY_PATH=/usr/local/cuda-11.7/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}' >> ~/.bashrc"
-    #lxc exec $env_name -- . .bashrc
-
-    # install cudnn 8.6.0
-    lxc exec $env_name -- cp /mnt/nas/drivers/cudnn-linux-x86_64-8.6.0.163_cuda11-archive.tar.xz /root/
-    lxc exec $env_name -- tar -xvf /root/cudnn-linux-x86_64-8.6.0.163_cuda11-archive.tar.xz
-    lxc exec $env_name -- cp /root/cudnn-linux-x86_64-8.6.0.163_cuda11-archive/include/* /usr/local/cuda-11.7/include/
-    lxc exec $env_name -- cp /root/cudnn-linux-x86_64-8.6.0.163_cuda11-archive/lib/* /usr/local/cuda-11.7/lib64/
-    lxc exec $env_name -- rm -r /root/cudnn*
-
-    # install Anaconda3
-    lxc exec $env_name -- bash /mnt/nas/drivers/Anaconda3-2022.05-Linux-x86_64.sh -b
-    lxc exec $env_name -- /root/anaconda3/bin/conda init
-    lxc exec $env_name -- . .bashrc
-    lxc exec $env_name -- /root/anaconda3/bin/conda config --set auto_activate_base true
-
-    # init pytorch
-    lxc exec $env_name -- /root/anaconda3/bin/conda create -n pytorch python=3.8 -y
-    lxc exec $env_name -- /root/anaconda3/bin/conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia -n pytorch -y 
+    installDriver $env_name $driver
+    installCUDA $env_name $cuda $cudaShort
+    installCUDNN $env_name $cudnn $cudnnShort $cudaShort
+    installAnaConda $env_name $anaconda
+    installPyTorch $env_name $python $pytorch
 
     # umount nas
     lxc config device remove $env_name nas0
-   
+    lxc restart $env_name
     ((index++))
 done
