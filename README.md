@@ -1,6 +1,6 @@
 # Linux Docket Deep Learning Environment Build Shell
 
-ver 3.0 new feature
+## ver 3.0 new feature
 1. shell functionize
 2. Customised environmental presets
 
