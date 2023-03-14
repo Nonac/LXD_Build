@@ -1,5 +1,10 @@
 # Linux Docket Deep Learning Environment Build Shell
 
+ver 3.0 new feature
+1. shell functionize
+2. Customised environmental presets
+
+
 ## ver 2.1 new feature
 1. fix bugs in multi-user build.
 2. mount nas with personal files.
