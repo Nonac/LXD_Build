@@ -40,7 +40,7 @@ launchContainer(){
 
 setPort(){
     # set container's ssh port
-    lxc config device add $env_name ${2} proxy listen=tcp:$local_ip:$ssh_port connect=tcp:$env_ip:${5} bind=host
+    lxc config device add $env_name ${2} proxy listen=tcp:$local_ip:${4} connect=tcp:$env_ip:${5} bind=host
 }
 
 setCPULimit(){
