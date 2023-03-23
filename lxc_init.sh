@@ -160,13 +160,7 @@ do
 
     launchContainer $env_name $passwd
 
-    # get the container's ip
-    env_ip=($(lxc list -c4 --format csv  $env_name))
-
-    setPort $env_name proxy0 $local_ip $ssh_port $env_ip 22
-    setPort $env_name proxy1 $local_ip $tensorboard_port $env_ip 6006
-
-
+  
     setCPULimit $env_name $cpu_limit
     setRAMLimit $env_name $memory_limit
     setGPULimit $env_name $gpu_limit
@@ -174,6 +168,14 @@ do
 
     mountNAS $env_name
     setPrivilege $env_name
+    
+    # get the container's ip
+    env_ip=($(lxc list -c4 --format csv  $env_name))
+
+    setPort $env_name proxy0 $local_ip $ssh_port $env_ip 22
+    setPort $env_name proxy1 $local_ip $tensorboard_port $env_ip 6006
+    
+    
     initAPT $env_name
     initSSH $env_name
 
