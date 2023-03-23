@@ -40,11 +40,11 @@ launchContainer(){
 
 setPort(){
     # set container's ssh port
-    lxc config device add $env_name ${2} proxy listen=tcp:$local_ip:$ssh_port connect=tcp:$env_ip:${5} bind=host
+    lxc config device add $env_name proxy0 proxy listen=tcp:$local_ip:$ssh_port connect=tcp:$env_ip:22 bind=host
 }
 
 setTensorboardPort(){
-    lxc config device add $env_name ${2} proxy listen=tcp:$local_ip:$tensorboard_port connect=tcp:$env_ip:${5} bind=host
+    lxc config device add $env_name proxy1 proxy listen=tcp:$local_ip:$tensorboard_port connect=tcp:$env_ip:6006 bind=host
 }
 
 setCPULimit(){
@@ -176,9 +176,9 @@ do
     # get the container's ip
     env_ip=($(lxc list -c4 --format csv  $env_name))
 
-    setPort $env_name proxy0 $local_ip $ssh_port $env_ip 22
+    setPort $env_name $local_ip $ssh_port $env_ip
     
-    setTensorboardPort $env_name proxy1 $local_ip $tensorboard_port $env_ip 6006
+    setTensorboardPort $env_name $local_ip $tensorboard_port $env_ip
     
     
     initAPT $env_name
