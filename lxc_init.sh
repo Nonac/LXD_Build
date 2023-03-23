@@ -18,9 +18,9 @@ pytorch="conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytor
 # Get user.csv
 # the user.csv should be like that:
 #
-#    test,123456,10000,0-8,16000MB,0000:0B:00.0|0000:0C:00.0,/mnt/ssd|/mnt/hdd|/mnt/nas/
+#    test,123456,10000,0-8,16000MB,0000:0B:00.0|0000:0C:00.0,/mnt/ssd|/mnt/hdd|/mnt/nas/,10001
 #
-#    container_name,password,ssh port,cpu limit,memory limit, gpu limit, disk limit
+#    container_name,password,ssh port,cpu limit,memory limit, gpu limit, disk limit,tensorboard port
 
 USERPATH="user.csv"
 
@@ -154,8 +154,9 @@ do
     memory_limit=$(echo $line | cut -d , -f 5)
     gpu_limit=$(echo $line | cut -d , -f 6)
     disk_limit=$(echo $line | cut -d , -f 7)
+    tensorboard_port=$(echo $line | cut -d , -f 8)
 
-    echo "env_name:$env_name passwd:$passwd ssh_port:$ssh_port cpu_limit:$cpu_limit memory_limit:$memory_limit gpu_limit:$gpu_limit disk_limit:$disk_limit"
+    echo "env_name:$env_name passwd:$passwd ssh_port:$ssh_port cpu_limit:$cpu_limit memory_limit:$memory_limit gpu_limit:$gpu_limit disk_limit:$disk_limit tensorboard_port:$tensorboard_port"
 
     launchContainer $env_name $passwd
 
@@ -163,7 +164,7 @@ do
     env_ip=($(lxc list -c4 --format csv  $env_name))
 
     setPort $env_name proxy0 $local_ip $ssh_port $env_ip 22
-    #setPort $env_name proxy1 $local_ip `expr $ssh_port+1` $env_ip 6006
+    setPort $env_name proxy1 $local_ip $tensorboard_port $env_ip 6006
 
 
     setCPULimit $env_name $cpu_limit
