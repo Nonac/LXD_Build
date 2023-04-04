@@ -3,7 +3,7 @@
 # Get current local ip
 local_ip=`ifconfig -a|grep inet|grep 192.168.11.*|grep -v 127.0.0.1|grep -v inet6|awk '{print $2}'|tr -d "addr:"​`
 #driver="NVIDIA-Linux-x86_64-515.86.01.run"
-driver="NVIDIA-Linux-x86_64-525.85.05.run"
+driver="NVIDIA-Linux-x86_64-525.89.02.run"
 cuda="cuda_11.8.0_520.61.05_linux.run"
 cudaShort="cuda-11.8"
 #BUG: cudnn counld not install auto. Need manully install in container.
