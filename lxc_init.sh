@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#BUG: cudnn counld not install auto. Need manully install in container.
-
 # Get current local ip
 local_ip=$(ip addr show | awk '/inet/ && /192\.168\.11\./ {gsub(/\/.*/, "", $2); print $2}')
 driver="NVIDIA-Linux-x86_64-535.129.03.run"
