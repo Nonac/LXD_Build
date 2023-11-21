@@ -1,17 +1,18 @@
 #!/bin/bash
 
+#BUG: cudnn counld not install auto. Need manully install in container.
+
 # Get current local ip
 local_ip=$(ip addr show | awk '/inet/ && /192\.168\.11\./ {gsub(/\/.*/, "", $2); print $2}')
 driver="NVIDIA-Linux-x86_64-535.129.03.run"
 cuda="cuda_12.1.0_530.30.02_linux.run"
-cudaShort="cuda-12.1"
-#BUG: cudnn counld not install auto. Need manully install in container.
 cudnn="cudnn-linux-x86_64-8.9.6.50_cuda12-archive.tar.xz"
-cudnnShort="cudnn-linux-x86_64-8.9.6.50_cuda12-archive"
 anaconda="Anaconda3-2023.03-Linux-x86_64.sh"
 python=3.8
 pytorch="conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia"
 
+cudnnShort="${cudnn%.tar.xz}"
+cudaShort="cuda-$(echo $(echo "$cuda" | cut -d '_' -f 2) | cut -d '.' -f 1,2)"
 # 检查必要命令是否可用的函数
 check_command() {
     if ! command -v "$1" &> /dev/null; then
