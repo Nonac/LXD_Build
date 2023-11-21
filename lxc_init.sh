@@ -142,9 +142,9 @@ installCUDA(){
 installCUDNN(){
     lxc exec $env_name -- cp /mnt/nas/drivers/$cudnn /root/
     lxc exec $env_name -- tar -xf /root/$cudnn
-    lxc exec $env_name -- cp /root/$cudnnShort/include/* /usr/local/$cudaShort/include/
-    lxc exec $env_name -- cp /root/$cudnnShort/lib/* /usr/local/$cudaShort/lib64/
-    #lxc exec $env_name -- rm -r /root/cudnn*
+    lxc exec $env_name -- sh -c 'cp /root/$cudnnShort/include/* /usr/local/$cudaShort/include/'
+    lxc exec $env_name -- sh -c 'cp /root/$cudnnShort/lib/* /usr/local/$cudaShort/lib64/'
+    lxc exec $env_name -- sh -c 'rm -r /root/cudnn*'
 }
 
 installAnaConda(){
