@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Get current local ip
-local_ip=`ifconfig -a|grep inet|grep 192.168.11.*|grep -v 127.0.0.1|grep -v inet6|awk '{print $2}'|tr -d "addr:"​`
+local_ip=$(ip addr show | awk '/inet/ && /192\.168\.11\./ {gsub(/\/.*/, "", $2); print $2}')
 driver="NVIDIA-Linux-x86_64-535.129.03.run"
 cuda="cuda_12.1.0_530.30.02_linux.run"
 cudaShort="cuda-12.1"
@@ -12,6 +12,18 @@ anaconda="Anaconda3-2023.03-Linux-x86_64.sh"
 python=3.8
 pytorch="conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia"
 
+# 检查必要命令是否可用的函数
+check_command() {
+    if ! command -v "$1" &> /dev/null; then
+        echo "命令未找到: $1"
+        exit 1
+    fi
+}
+
+# 检查所需命令
+check_command ifconfig
+check_command awk
+check_command lxc
 
 # Get user.csv
 # the user.csv should be like that:
