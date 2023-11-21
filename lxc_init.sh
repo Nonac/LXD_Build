@@ -2,17 +2,15 @@
 
 # Get current local ip
 local_ip=`ifconfig -a|grep inet|grep 192.168.11.*|grep -v 127.0.0.1|grep -v inet6|awk '{print $2}'|tr -d "addr:"​`
-#driver="NVIDIA-Linux-x86_64-515.86.01.run"
-driver="NVIDIA-Linux-x86_64-525.125.06.run"
-cuda="cuda_11.8.0_520.61.05_linux.run"
-cudaShort="cuda-11.8"
+driver="NVIDIA-Linux-x86_64-535.129.03.run"
+cuda="cuda_12.1.0_530.30.02_linux.run"
+cudaShort="cuda-12.1"
 #BUG: cudnn counld not install auto. Need manully install in container.
-cudnn="cudnn-linux-x86_64-8.8.1.3_cuda11-archive.tar.xz"
-cudnnShort="cudnn-linux-x86_64-8.8.1.3_cuda11-archive"
+cudnn="cudnn-linux-x86_64-8.9.6.50_cuda12-archive.tar.xz"
+cudnnShort="cudnn-linux-x86_64-8.9.6.50_cuda12-archive"
 anaconda="Anaconda3-2023.03-Linux-x86_64.sh"
 python=3.8
-pytorch="conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia"
-#pytorch="conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia"
+pytorch="conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia"
 
 
 # Get user.csv
