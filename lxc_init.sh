@@ -27,7 +27,7 @@ check_command lxc
 # Get user.csv
 # the user.csv should be like that:
 #
-#    test,123456,10000,0-8,16000MB,0000:0B:00.0|0000:0C:00.0,/mnt/ssd|/mnt/hdd|/mnt/nas/,10001
+#    test,123456,10000,0-8,16000MB,0000:0B:00.0|0000:0C:00.0,/mnt/ssd|/mnt/hdd,10001
 #
 #    container_name,password,ssh port,cpu limit,memory limit, gpu limit, disk limit,tensorboard port
 

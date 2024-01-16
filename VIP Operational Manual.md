@@ -329,17 +329,17 @@ VIP研究室的网络存储NAS开启了Samba分享功能，可以共享给局域
  其次，修改user.csv文件。user.csv文件的每一行是设定每一个容器的具体参数，解释如下：
 
  ```bash
-   container_name,password,ssh port,cpu limit,memory limit, gpu limit, disk limit, personal filefolder in nas
-   test,123456,10000,0-8,16000MB,0000:0B:00.0|0000:0C:00.0,/mnt/nas/|/mnt/ssd|/mnt/hdd,YANGYinan
+   container_name(=personal filefolder in nas),password,ssh port,cpu limit,memory limit, gpu limit, disk limit, tensor port
+   YANGYinan,123456,10000,0-8,16000MB,0000:0B:00.0|0000:0C:00.0,/mnt/ssd|/mnt/hdd,10001
  ```
-      1. container_name: 本机内部的容器名称，不能与其他容器名称重复，建议使用用户名字。
+      1. container_name: 本机内部的容器名称，不能与其他容器名称重复，必须与nas用户名字相同。
       2. password: 容器root登陆的密码。
       3. ssh port：本机公开的网络端口，用来映射容器内部SSH的22端口。
       4. cpu limit：0-8指的是限制0-8共9个cpu线程给容器。
       5. memory limit：限制容器使用的RAM。
       6. gpu limit： 限制容器使用的GPU地址。多GPU的情况用|分隔每一个地址。
-      7. disk limit：限制容器使用的内部存储设备，第一个一定要是研究室NAS。
-      8. personal filefolder in nas： 用户个人在NAS中的文件夹。
+      7. disk limit：限制容器使用的内部存储设备.(不用写入/mnt/nas,系统自动根据用户名字挂载)
+      8. tensor port： 挂载tensor的端口。
    其中4-6为硬件限制，具体的语法设定可以参考：https://linuxcontainers.org/lxd/docs/stable-4.0/instances/
    如果需要开放容器内部的其他网络端口，如Tensorboard:6006,参考脚本备注掉的这一句进行设定。
    ```bash
